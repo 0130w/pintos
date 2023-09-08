@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <random.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,7 @@
 #include "devices/timer.h"
 #include "devices/vga.h"
 #include "devices/rtc.h"
+#include "interrupt.h"
 #include "threads/interrupt.h"
 #include "threads/io.h"
 #include "threads/loader.h"
@@ -133,9 +135,41 @@ pintos_init (void)
     /* Run actions specified on kernel command line. */
     run_actions (argv);
   } else {
-    // TODO: no command line passed to kernel. Run interactively 
+    size_t cmd_length = 32;
+    char* cmd = (char*)malloc(cmd_length);
+    while(true) {
+      printf("PKUOS> ");
+      memset(cmd, '\0', cmd_length);
+      size_t index = 0;
+      while(true) {
+        // input char
+        char c = input_getc();
+        if(c == 13) {
+          printf("\n");
+          break;
+        } else if (c == 127) {
+          if(index > 0) {
+            cmd[--index] = '\0';
+            printf("\b \b");
+          }
+          continue;
+        }
+        if(index >= cmd_length) { continue; }
+        cmd[index++] = c;
+        printf("%c", c);
+      }
+      if(!strcmp(cmd, "exit")) { 
+        break; 
+      }
+      if(!strcmp(cmd, "whoami")) {
+        printf("zzq\n");
+        continue;
+      }
+      printf("invalid command\n");
+    }
+    free(cmd);
+    printf("shell terminated.\n");
   }
-
   /* Finish up. */
   shutdown ();
   thread_exit ();
